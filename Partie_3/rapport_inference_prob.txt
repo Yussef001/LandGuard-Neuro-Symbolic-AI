@@ -1,0 +1,111 @@
+========================================================================
+  LANDGUARD NEURO-SYMBOLIC AI
+  RAPPORT D'INFERENCE PROBABILISTE — ProbLog
+  Partie 3 | Base : probabilistic_rules.pl + queries.pl
+========================================================================
+
+  ──────────────────────────────────────────────────────────────────
+  GROUPE 1 — Suspicion de prête-nom
+  ──────────────────────────────────────────────────────────────────
+  Requête                                             P   Criticité
+  ──────────────────────────────────────────────────────────────────
+  prete_nom_fort(cedric,christian)               0.7115   [ELEVE    ]
+  prete_nom_telephone(cedric,christian)          0.0000   [FAIBLE   ]
+  prete_nom_adresse(barkissa,hakim)              0.6000   [ELEVE    ]
+
+  ──────────────────────────────────────────────────────────────────
+  GROUPE 2 — Spéculation foncière
+  ──────────────────────────────────────────────────────────────────
+  Requête                                             P   Criticité
+  ──────────────────────────────────────────────────────────────────
+  speculateur_confirme(sawadogo)                 0.4620   [MOYEN    ]
+  speculateur_revente(sawadogo)                  0.5250   [MOYEN    ]
+  speculateur_retention(sawadogo)                0.4225   [MOYEN    ]
+
+  ──────────────────────────────────────────────────────────────────
+  GROUPE 3 — Réseaux frauduleux
+  ──────────────────────────────────────────────────────────────────
+  Requête                                             P   Criticité
+  ──────────────────────────────────────────────────────────────────
+  blanchiment_circulaire(sawadogo,christian,barkissa) 0.7744   [ELEVE    ]
+  concentration_familiale(barkissa)              0.5184   [MOYEN    ]
+  accaparement_urbain(yussef)                    0.9200   [CRITIQUE ]
+  accaparement_urbain(sawadogo)                  0.9200   [CRITIQUE ]
+
+  ──────────────────────────────────────────────────────────────────
+  GROUPE 4 — Conflits d'intérêts
+  ──────────────────────────────────────────────────────────────────
+  Requête                                             P   Criticité
+  ──────────────────────────────────────────────────────────────────
+  conflit_direct(konan)                          0.9025   [CRITIQUE ]
+  conflit_familial(ouedraogo,othniel)            0.8100   [CRITIQUE ]
+
+  ──────────────────────────────────────────────────────────────────
+  GROUPE 5 — Complicité notariale
+  ──────────────────────────────────────────────────────────────────
+  Requête                                             P   Criticité
+  ──────────────────────────────────────────────────────────────────
+  notaire_complice(zongo)                        0.6724   [ELEVE    ]
+
+  ──────────────────────────────────────────────────────────────────
+  GROUPE 6 — Score FRAUDEUR_PROBABLE
+  ──────────────────────────────────────────────────────────────────
+  Requête                                             P   Criticité
+  ──────────────────────────────────────────────────────────────────
+  fraudeur_probable(sawadogo)                    0.3868   [MOYEN    ]
+  fraudeur_probable(cedric)                      0.0000   [FAIBLE   ]
+  fraudeur_probable(konan)                       0.0000   [FAIBLE   ]
+  fraudeur_probable(zongo)                       0.0000   [FAIBLE   ]
+
+========================================================================
+  SYNTHESE PAR ACTEUR
+========================================================================
+
+  Acteur : sawadogo (Promoteur)
+    Accaparement urbain                      0.9200  [CRITIQUE ]  ██████████████████
+    Blanchiment circulaire                   0.7744  [ELEVE    ]  ███████████████
+    Speculateur confirme                     0.4620  [MOYEN    ]  █████████
+    Speculateur revente                      0.5250  [MOYEN    ]  ██████████
+    Speculateur retention                    0.4225  [MOYEN    ]  ████████
+    Score FRAUDEUR_PROBABLE                  0.3868  [MOYEN    ]  ███████
+
+  Acteur : yussef (Citoyen)
+    Accaparement urbain                      0.9200  [CRITIQUE ]  ██████████████████
+
+  Acteur : hakim (Citoyen)
+    Concentration familiale liee a barkissa  0.5184  [MOYEN    ]  ██████████
+
+  Acteur : cedric / christian (Citoyens)
+    Prete-nom fort (tel+IBAN)                0.7115  [ELEVE    ]  ██████████████
+    Prete-nom telephone                      0.0000  [FAIBLE   ]  
+    Score FRAUDEUR_PROBABLE cedric           0.0000  [FAIBLE   ]  
+
+  Acteur : barkissa (Citoyenne)
+    Prete-nom adresse (hakim)                0.6000  [ELEVE    ]  ████████████
+    Concentration familiale                  0.5184  [MOYEN    ]  ██████████
+
+  Acteur : konan (Agent public)
+    Conflit direct                           0.9025  [CRITIQUE ]  ██████████████████
+    Score FRAUDEUR_PROBABLE                  0.0000  [FAIBLE   ]  
+
+  Acteur : ouedraogo (Agent public)
+    Conflit familial (othniel)               0.8100  [CRITIQUE ]  ████████████████
+
+  Acteur : zongo (Notaire)
+    Notaire complice                         0.6724  [ELEVE    ]  █████████████
+    Score FRAUDEUR_PROBABLE                  0.0000  [FAIBLE   ]  
+
+========================================================================
+  ECHELLE DE CRITICITE
+========================================================================
+  [FAIBLE   ]  P < 0.30   — Signal faible, surveillance simple
+  [MOYEN    ]  0.30-0.60  — Alerte, investigation recommandee
+  [ELEVE    ]  0.60-0.80  — Alerte forte, controle prioritaire
+  [CRITIQUE ]  P > 0.80   — Fraude hautement probable, saisine
+
+  NOTE : Les scores FRAUDEUR_PROBABLE a 0 pour cedric, konan et
+  zongo indiquent que les clauses 'fraudeur_probable' correspondantes
+  nécessitent des signaux composites non encore tous observés dans
+  cette ABox. Les scores individuels (prete_nom_fort, conflit_direct,
+  notaire_complice) restent eux significatifs (ELEVE à CRITIQUE).
+========================================================================

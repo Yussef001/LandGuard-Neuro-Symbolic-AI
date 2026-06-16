@@ -1,0 +1,56 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# PyTorch / ML
+*.pth
+*.ckpt
+*.pt
+runs/
+wandb/
+
+# Fichiers temporaires générés
+_tmp_*.pl
+_test_*.json
+_test_*.pl
+rapport_final.json
+
+# Environnements virtuels
+venv/
+env/
+.venv/
+.env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+*.txt.bak
+
+# LaTeX (si rapport compilé localement)
+*.aux
+*.log
+*.out
+*.toc
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.bbl
+*.blg
+_minted*/
