@@ -223,5 +223,5 @@ Groupe 3  — Intégration E2E        : 5/5  ✅
 
 ## 📄 Licence
 
-Projet académique — Master 1 Informatique  
+Projet académique — Master 1 Informatique Université Joseph Ki Zerbo 
 IA Symbolique, Probabiliste & Neuro-Symbolique
