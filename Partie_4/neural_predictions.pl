@@ -1,3 +1,5 @@
+:- discontiguous neural_class/2.
+:- discontiguous neural_proba/3.
 :- set_prolog_flag(encoding, utf8).
 % ============================================================
 %  neural_predictions.pl — Généré automatiquement par neural_model.py

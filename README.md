@@ -81,7 +81,7 @@ pip install torch problog deepproblog reportlab
 
 ```bash
 # 1. Cloner le dépôt
-git clone https://github.com/VOTRE_USERNAME/LandGuard-Neuro-Symbolic-AI.git
+git clone https://github.com/Yussef001/LandGuard-Neuro-Symbolic-AI.git
 cd LandGuard-Neuro-Symbolic-AI
 
 # 2. Installer les dépendances Python
@@ -93,12 +93,40 @@ swipl --version
 
 ---
 
+## ⚠️ Important — Placement des fichiers avant exécution
+
+Les fichiers Prolog se référencent mutuellement par chemin relatif.
+**Avant de lancer les commandes ci-dessous, copiez tous les fichiers à la racine du dépôt** :
+
+```bash
+# Depuis la racine du dépôt, copier tous les fichiers à plat
+cp Partie_1/*.pl .
+cp Partie_1/*.md .
+cp Partie_2/*.pl .
+cp Partie_3/*.pl .
+cp Partie_3/*.txt .
+cp Partie_4/*.pl .
+cp Partie_4/*.py .
+cp Partie_5/*.py .
+cp Partie_5/*.csv .
+```
+
+Votre répertoire de travail doit alors contenir :
+
+```
+knowledge_base.pl  rules.pl  inference_engine.pl  explainability.pl
+probabilistic_rules.pl  queries.pl
+deepproblog_model.pl  neural_predictions.pl  neural_model.py
+main.py  test_suite.py  dataset.csv
+```
+
+---
+
 ## ▶️ Exécution
 
 ### Partie 1 — Logique de Description
 ```bash
-# Consulter la base de connaissances
-swipl -q Partie_1/knowledge_base.pl
+swipl -q knowledge_base.pl
 ?- lister_axiomes.
 ?- lister_contraintes.
 ```
@@ -106,10 +134,9 @@ swipl -q Partie_1/knowledge_base.pl
 ### Partie 2 — Moteur Prolog
 ```bash
 # Lancer l'inférence symbolique complète
-swipl -q Partie_2/inference_engine.pl
+swipl -q inference_engine.pl
 
-# Requête interactive
-swipl -q Partie_2/inference_engine.pl
+# Requêtes interactives
 ?- accapareur_urbain(X).
 ?- reseau_circulaire(X, Y, Z).
 ?- print_traces.
@@ -118,30 +145,30 @@ swipl -q Partie_2/inference_engine.pl
 ### Partie 3 — ProbLog
 ```bash
 # Inférence probabiliste
-python3 -m problog Partie_3/queries.pl
+py -m problog queries.pl
 ```
 
 ### Partie 4 — Module Neuronal
 ```bash
 # Entraîner le modèle et exporter les poids
-python3 Partie_4/neural_model.py
+py neural_model.py
 
 # Tester les règles hybrides DeepProbLog
-swipl -q Partie_4/deepproblog_model.pl
+swipl -q deepproblog_model.pl
 ```
 
 ### Partie 5 — Pipeline complet
 ```bash
 # Lancer l'orchestration complète
-python3 Partie_5/main.py
+py main.py
 
 # Avec options
-python3 Partie_5/main.py --input Partie_5/dataset.csv --output rapport_final.json
+py main.py --input dataset.csv --output rapport_final.json
 
 # Lancer tous les tests (26 tests)
-python3 Partie_5/test_suite.py
+py test_suite.py
 # ou
-python3 -m pytest Partie_5/test_suite.py -v
+py -m pytest test_suite.py -v
 ```
 
 ---
@@ -212,7 +239,7 @@ Groupe 3  — Intégration E2E        : 5/5  ✅
 │  ┌──────────────────────────────────────────────────────┐  │
 │  │              ProbLog — Quantification du Risque       │  │
 │  │   Échelle : FAIBLE / MOYEN / ÉLEVÉ / CRITIQUE        │  │
-│  └──────────────────────────┬─────────────────────────── ┘  │
+│  └──────────────────────────┬──────────────────────────┘   │
 │                             │                              │
 │                             ▼                              │
 │              Rapport XAI + Journal des Traces              │
@@ -223,5 +250,5 @@ Groupe 3  — Intégration E2E        : 5/5  ✅
 
 ## 📄 Licence
 
-Projet académique — Master 1 Informatique  
+Projet académique — Master 1 Informatique Université Joseph Ki ZERBO 
 IA Symbolique, Probabiliste & Neuro-Symbolique

@@ -1,3 +1,13 @@
+:- discontiguous concept/1.
+:- discontiguous sous_concept/2.
+:- discontiguous possede/2.
+:- discontiguous dossier/1.
+:- discontiguous traite/2.
+:- discontiguous lien_familial/2.
+:- discontiguous affectation/1.
+:- discontiguous attribution/1.
+:- discontiguous beneficiaire/2.
+:- discontiguous dossier_suspect/1.
 :- set_prolog_flag(encoding, utf8).
 % ============================================================
 %  LandGuard Neuro-Symbolic AI

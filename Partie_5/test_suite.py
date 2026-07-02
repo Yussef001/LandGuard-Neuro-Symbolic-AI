@@ -33,16 +33,33 @@ from neural_model import FraudMLP, CLASS_NAMES, N_FEATURES
 
 def prolog_query(goal, timeout=15):
     """
-    Exécute un goal Prolog via SWI-Prolog et retourne stdout.
-    Charge inference_engine.pl pour avoir tous les faits et règles.
+    Exécute un goal Prolog via SWI-Prolog et retourne stdout avec encodage UTF-8.
     """
-    result = subprocess.run(
-        ["swipl", "-q", "-g", goal, "-t", "halt",
-         str(BASE_DIR / "inference_engine.pl")],
-        capture_output=True, text=True, timeout=timeout,
-        cwd=str(BASE_DIR)
-    )
-    return result.stdout.strip(), result.returncode
+    pl_script = BASE_DIR / "inference_engine.pl" 
+    
+    try:
+        result = subprocess.run(
+            [
+                r"C:\Program Files\swipl\bin\swipl.exe", 
+                "-q", 
+                "--nodebug",
+                "-f", "none",            
+                "-s", str(pl_script), 
+                "-g", goal, 
+                "-t", "halt"
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",     
+            cwd=str(BASE_DIR),
+            timeout=timeout
+        )
+        return result.stdout.strip(), result.returncode
+    except subprocess.TimeoutExpired:
+        return "", -1
+    except Exception as e:
+        return "", -2
 
 
 def prolog_succeeds(goal, timeout=15):
@@ -54,20 +71,42 @@ def prolog_succeeds(goal, timeout=15):
 
 def problog_query(query_term, timeout=30):
     """
-    Exécute une requête ProbLog isolée et retourne la probabilité (float).
+    Exécute une requête ProbLog de manière isolée et retourne sa probabilité.
+    Version blindée pour Windows avec capture des flux d'erreurs.
     """
+    # Nettoyage et sécurisation du chemin pour le consult Prolog sous Windows
+    safe_path = str(BASE_DIR / "probabilistic_rules.pl").replace('\\', '/')
+    
     pl_content = f"""
-:- consult('{BASE_DIR / "probabilistic_rules.pl"}').
+:- consult('{safe_path}').
 query({query_term}).
 """
     tmp = BASE_DIR / "_tmp_test_query.pl"
     tmp.write_text(pl_content, encoding="utf-8")
+    
     try:
+        # Copie et nettoyage de l'environnement système pour hériter des variables PATH
+        env = os.environ.copy()
+        
         result = subprocess.run(
-            ["python3", "-m", "problog", str(tmp)],
-            capture_output=True, text=True, timeout=timeout,
+            [sys.executable, "-m", "problog", str(tmp)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+            errors="ignore",
+            env=env,
+            timeout=timeout,
             cwd=str(BASE_DIR)
         )
+        
+        # --- DIAGNOSTIC EN CAS D'ÉCHEC ---
+        # Si la sortie standard est vide mais qu'il y a une erreur dans stderr
+        if not result.stdout.strip() and result.stderr.strip():
+            print(f"\n[DEBUG PROBLOG] Erreur détectée : {result.stderr.strip()}", file=sys.stderr)
+            return None
+
+        # Analyse de la sortie standard
         for line in result.stdout.strip().split("\n"):
             if ":" in line:
                 parts = line.rsplit(":", 1)
@@ -77,7 +116,12 @@ query({query_term}).
                     except ValueError:
                         pass
         return None
+        
+    except Exception as e:
+        print(f"\n[DEBUG PROBLOG] Exception Python : {str(e)}", file=sys.stderr)
+        return None
     finally:
+        # Nettoyage du fichier temporaire
         tmp.unlink(missing_ok=True)
 
 
@@ -319,12 +363,18 @@ class TestEndToEnd(unittest.TestCase):
 
     def test_E4_pipeline_runs_without_crash(self):
         """Le pipeline main.py doit s'exécuter sans erreur sur le dataset complet."""
+        import sys
         result = subprocess.run(
-            ["python3", str(BASE_DIR / "main.py"),
+            [sys.executable, str(BASE_DIR / "main.py"),  
              "--input",  str(BASE_DIR / "dataset.csv"),
              "--output", str(BASE_DIR / "_test_output.json"),
              "--no-problog"],
-            capture_output=True, text=True, timeout=60,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",                           
+            errors="ignore",
+            timeout=60,
             cwd=str(BASE_DIR)
         )
         self.assertEqual(result.returncode, 0,
@@ -335,15 +385,22 @@ class TestEndToEnd(unittest.TestCase):
 
     def test_E5_xai_report_structure(self):
         """Le rapport JSON doit contenir les sections XAI attendues."""
+        import sys
         result = subprocess.run(
-            ["python3", str(BASE_DIR / "main.py"),
+            [sys.executable, str(BASE_DIR / "main.py"),  # <-- Utilise sys.executable au lieu de "python3"
              "--input",  str(BASE_DIR / "dataset.csv"),
              "--output", str(BASE_DIR / "_test_xai.json"),
              "--no-problog", "--no-prolog"],
-            capture_output=True, text=True, timeout=60,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",                            # <-- Sécurise l'encodage
+            errors="ignore",
+            timeout=60,
             cwd=str(BASE_DIR)
         )
-        self.assertEqual(result.returncode, 0)
+        self.assertEqual(result.returncode, 0,
+            f"main.py a echoue au test E5 (code {result.returncode}) :\n{result.stderr[:500]}")
         out_path = BASE_DIR / "_test_xai.json"
         with open(out_path, encoding="utf-8") as f:
             report = json.load(f)

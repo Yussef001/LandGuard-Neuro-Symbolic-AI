@@ -342,54 +342,87 @@ def build_xai_report(neural_results, prob_results, prolog_alerts):
 
 
 def print_report(report):
-    banner("RAPPORT XAI CONSOLIDE — LANDGUARD NEURO-SYMBOLIC AI")
+    try:
+        banner("RAPPORT XAI CONSOLIDE — LANDGUARD NEURO-SYMBOLIC AI")
 
-    stats = report["statistiques"]
-    print(f"\n  Date        : {report['metadata']['date'][:19]}")
-    print(f"  Dossiers    : {report['metadata']['nb_dossiers']}")
-    print(f"  Precision neuronale : {stats['precision_neurale']}%")
-    print(f"  Alertes Prolog      : {stats['nb_alertes_prolog']}")
+        stats = report["statistiques"]
+        print(f"\n   Date         : {report['metadata']['date'][:19]}")
+        print(f"   Dossiers     : {report['metadata']['nb_dossiers']}")
+        print(f"   Precision neuronale : {stats['precision_neurale']}%")
+        print(f"   Alertes Prolog      : {stats['nb_alertes_prolog']}")
 
-    print("\n  DISTRIBUTION DES VERDICTS FINAUX :")
-    for label, count in stats["verdicts"].items():
-        icon = RISK_SCALE[label][1]
-        bar  = "█" * count
-        print(f"    {icon} {label:<22} : {count:>2}  {bar}")
+        print("\n   DISTRIBUTION DES VERDICTS FINAUX :")
+        for label, count in stats["verdicts"].items():
+            icon = RISK_SCALE.get(label, ["", "⚠"])[1]
+            # Sécurité pour Windows : utilise '#' si la console n'aime pas le bloc plein
+            try:
+                bar = "█" * count
+                print(f"    {icon} {label:<22} : {count:>2}  {bar}")
+            except UnicodeEncodeError:
+                bar = "#" * count
+                print(f"    [!] {label:<22} : {count:>2}  {bar}")
 
-    banner("DOSSIERS A RISQUE ELEVE OU CRITIQUE")
-    high_risk = [d for d in report["dossiers"]
-                 if d["niveau_risque"] in ("MOYEN", "CRITIQUE", "ELEVE")]
-    high_risk.sort(key=lambda x: x["risk_score"], reverse=True)
+        banner("DOSSIERS A RISQUE ELEVE OU CRITIQUE")
+        high_risk = [d for d in report["dossiers"]
+                     if d.get("niveau_risque") in ("MOYEN", "CRITIQUE", "ELEVE")]
+        high_risk.sort(key=lambda x: x.get("risk_score", 0), reverse=True)
 
-    for d in high_risk:
-        print(f"\n  {d['icone']} [{d['final_class']}] {d['nom'].upper()} "
-              f"(id={d['id']}, role={d['role']})")
-        print(f"     Niveau de risque  : {d['niveau_risque']}")
-        print(f"     Score composite   : {d['risk_score']:.4f}")
-        print(f"     Confiance neurale : {d['neural_conf']*100:.1f}%")
-        if d["prolog_rules"]:
-            print(f"     Regles Prolog     : {', '.join(d['prolog_rules'])}")
-        print(f"     XAI               : {d['explication']}")
+        for d in high_risk:
+            icone = d.get('icone', '⚠')
+            try:
+                print(f"\n  {icone} [{d['final_class']}] {d['nom'].upper()} (id={d['id']}, role={d['role']})")
+            except UnicodeEncodeError:
+                print(f"\n  [!] [{d['final_class']}] {d['nom'].upper()} (id={d['id']}, role={d['role']})")
+                
+            print(f"     Niveau de risque  : {d['niveau_risque']}")
+            print(f"     Score composite   : {d['risk_score']:.4f}")
+            print(f"     Confiance neurale : {d['neural_conf']*100:.1f}%")
+            if d.get("prolog_rules"):
+                print(f"     Regles Prolog     : {', '.join(d['prolog_rules'])}")
+            print(f"     XAI               : {d['explication']}")
 
-    banner("PROBABILITES PROBLOG (Top 5)")
-    top5 = sorted(report["probabilites_problog"].items(),
-                  key=lambda x: x[1], reverse=True)[:5]
-    for q, p in top5:
-        level = ("CRITIQUE" if p >= 0.80 else
-                 "ELEVE"    if p >= 0.60 else
-                 "MOYEN"    if p >= 0.30 else "FAIBLE")
-        print(f"  {q:<50} P={p:.4f}  [{level}]")
-
-
-def save_report(report, output_path="rapport_final.json"):
-    with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(report, f, ensure_ascii=False, indent=2)
-    print(f"\n[OK] Rapport JSON exporte -> {output_path}")
+        # Sécurité si --no-problog est activé (évite une erreur KeyError)
+        if "probabilites_problog" in report and report["probabilites_problog"]:
+            banner("PROBABILITES PROBLOG (Top 5)")
+            top5 = sorted(report["probabilites_problog"].items(),
+                          key=lambda x: x[1], reverse=True)[:5]
+            for q, p in top5:
+                level = ("CRITIQUE" if p >= 0.80 else
+                         "ELEVE"    if p >= 0.60 else
+                         "MOYEN"    if p >= 0.30 else "FAIBLE")
+                try:
+                    print(f"  {q:<50} P={p:.4f}  [{level}]")
+                except UnicodeEncodeError:
+                    clean_q = q.encode('ascii', 'ignore').decode('ascii')
+                    print(f"  {clean_q:<50} P={p:.4f}  [{level}]")
+                    
+    except Exception as e:
+        # Si une autre erreur survient, on affiche un avertissement sans faire planter le programme
+        print(f"\n[Avertissement] Erreur d'affichage du rapport console ({str(e)}), mais le fichier JSON est bien genere.")
 
 
 # ════════════════════════════════════════════════════════════
-# POINT D'ENTREE
+# UTILITAIRE DE SAUVEGARDE ET POINT D'ENTREE
 # ════════════════════════════════════════════════════════════
+
+def save_report(report, output_path):
+    """
+    Sauvegarde le rapport au format JSON de manière propre en gérant l'UTF-8.
+    """
+    import json
+    from pathlib import Path
+    try:
+        path = Path(output_path)
+        # Crée les dossiers parents si jamais ils n'existent pas
+        path.parent.mkdir(parents=True, exist_ok=True)
+        
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(report, f, ensure_ascii=False, indent=4)
+        print(f"[OK] Rapport JSON sauvegarde avec succes dans : {path}")
+    except Exception as e:
+        print(f"[Erreur] Impossible de sauvegarder le rapport JSON : {e}")
+
+
 def main():
     parser = argparse.ArgumentParser(description="LandGuard AI — Pipeline principal")
     parser.add_argument("--input",  default=str(DATASET),
@@ -429,4 +462,12 @@ def main():
 
 
 if __name__ == "__main__":
+    import sys
+    
+    if sys.platform == "win32":
+        try:
+            sys.stdout.reconfigure(encoding='utf-8', errors='ignore')
+            sys.stderr.reconfigure(encoding='utf-8', errors='ignore')
+        except Exception:
+            pass
     main()
